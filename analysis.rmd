@@ -1,0 +1,40 @@
+---
+title: "Project 2 Deliverable 1"
+author: "Raghav Maini, Nick Caseria, Gabriel Correa, Katherine McElroy, Taylor Noren"
+date: "2/26/2022"
+output:
+  html_document:
+    toc: true
+    theme: readable
+    highlight: tango
+    code_folding: show
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Downloading and Prepping the Data
+
+```{r}
+#Downloading and Prepping the Data
+basketball <- read.csv("cbb.csv", stringsAsFactors = TRUE)
+summary(basketball)
+str(basketball)
+```
+
+The data set we have chosen details college basketball statistics from 2013-2019. The data set is broken down by team (355 total). Each team is further categorized by conference. There are a number of statistics that are tracked for each team including the number of games they have played (G) and the number of wins they have (W). The rest of the categories in the data set essentially sum up a teams offensive and defensive efficiency, including turnover percentage, field goal percentage, etc. The goal of our analysis is to use the data set to train a model on the 2013-2019 data to successfully predict the outcomes of the upcoming 2022 march madness tournament. This poses a number of interesting business questions that we hope to answer. First and foremost, there is a rising popularity in sports betting. With college sports in particular, betters are only able to bet on team outcome rather than individual players unlike the NBA. This means our particular data set is a valuable means of assessing how teams might fare this year. Further, college basketball requires comprehensive investment. It is difficult for universities to predict whether or not their program will be successful, and oftentimes coaching contracts are arbitrarily extended based on the performance of one season. Our hope is that using this historical data will shed insight on how colleges should handle their programs in the future and if there are any aspects coaches should focus on when creating their rosters for the next year.
+
+With this question in mind, our response variable for our analysis would be the "POSTSEASON" outcome which details where a team finished at the end of the season. 
+
+```{r}
+#Making seed and year factors
+basketball$SEED <- as.factor(basketball$SEED)
+basketball$YEAR <- as.factor(basketball$YEAR)
+
+#Create new columns that have the difference between 3P_O and 3P_D; 2P_O and 2P_D
+```
+
+As far as data cleaning goes, there isn't any substantial work to be done. We were able to source this data set on Kaggle which was already accompanied by in depth analysis. With this, the data was essentially cleaned and ready to use. However, we decided to make a couple of key changes. Firstly, we decided to make SEED and YEAR factors. Given that SEED and YEAR both have a limited number of outcomes, this provides us a stronger basis for considering how 1 seeds vs 2 seeds, etc. perform against each other as well as how our predictions change from year to year.
+
+Further, we decided to create two new columns: Delta_3P and Delta_2P. These detail the differential between how many 3 point shots and 2 point shots they allow to score vs how many they actually score themselves. The goal of creating these columns is to assess how teams generally fare aginst their opposition in terms of these shots. A negative delta implies that they, on average, are worse than their competition while a positive delta implies the opposite. 
