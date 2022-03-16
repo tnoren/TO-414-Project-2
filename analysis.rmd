@@ -19,6 +19,9 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r}
 #Downloading and Prepping the Data
 basketball <- read.csv("cbb.csv", stringsAsFactors = TRUE)
+basketball$TEAM <- NULL
+basketball$CONF <- NULL
+basketball$SEED <- NULL
 summary(basketball)
 str(basketball)
 ```
@@ -29,15 +32,85 @@ With this question in mind, our response variable for our analysis would be the 
 
 ```{r}
 #Making seed and year factors
-basketball$SEED <- as.factor(basketball$SEED)
-basketball$YEAR <- as.factor(basketball$YEAR)
+#basketball$SEED <- as.factor(basketball$SEED)
+#basketball$YEAR <- as.factor(basketball$YEAR)
 
 #Create new columns that have the difference between 3P_O and 3P_D; 2P_O and 2P_D
 basketball$Delta_2P <- basketball$X2P_O - basketball$X2P_D
 basketball$Delta_3P <- basketball$X3P_O - basketball$X3P_D
-
+summary(basketball)
 ```
 
 As far as data cleaning goes, there isn't any substantial work to be done. We were able to source this data set on Kaggle which was already accompanied by in depth analysis. With this, the data was essentially cleaned and ready to use. However, we decided to make a couple of key changes. Firstly, we decided to make SEED and YEAR factors. Given that SEED and YEAR both have a limited number of outcomes, this provides us a stronger basis for considering how 1 seeds vs 2 seeds, etc. perform against each other as well as how our predictions change from year to year.
 
 Further, we decided to create two new columns: Delta_3P and Delta_2P. These detail the differential between how many 3 point shots and 2 point shots they allow to score vs how many they actually score themselves. The goal of creating these columns is to assess how teams generally fare against their opposition in terms of these shots. A negative delta implies that they, on average, are worse than their competition while a positive delta implies the opposite. 
+
+## Creating numeric reponse variable column
+
+```{r}
+basketball$POSTSEASON_NUM <- ifelse(basketball$POSTSEASON == "R64", 1, ifelse(basketball$POSTSEASON == "R32", 2, ifelse(basketball$POSTSEASON == "S16", 3, ifelse(basketball$POSTSEASON == "E8", 4, ifelse(basketball$POSTSEASON == "F4", 5, ifelse(basketball$POSTSEASON == "2ND", 6, ifelse(basketball$POSTSEASON == "Champions", 7, 0)))))))
+basketball$POSTSEASON_NUM[is.na(basketball$POSTSEASON_NUM)] <- 0
+basketball$POSTSEASON <- NULL
+summary(basketball)
+
+
+```
+
+## Split Data into Training Set and Validation Set
+
+```{r}
+#70 - 30 Split
+set.seed(783)
+train_set <- sample(1:nrow(basketball), 0.7*nrow(basketball))
+
+#Training set 
+tr <- basketball[train_set, ]
+x_tr <- basketball[train_set, -25] #x only 
+y_tr <- basketball[train_set, 25] # y only
+
+#Validation set
+val <- basketball[-train_set, ]
+x_val <- basketball[-train_set,-25]  
+y_val <- basketball[-train_set,25]  
+
+head(tr)
+
+
+```
+
+## Run Linear Regression
+
+```{r}
+if(!"caret" %in% installed.packages()){install.packages("caret")}
+library(caret)
+
+# Simple linear regression
+
+m1 <- lm(POSTSEASON_NUM ~ ., data = tr)
+
+summary(m1)
+
+#  Step 2. Making predictions 
+
+pred4 <- predict(m1, x_val)
+
+#Creating predict interval 
+predict(m1, x_val, interval ="prediction", level= 0.95)
+
+
+#  Step 3. Evaluating the model performance   
+#          Put postResample result in the object, result     
+
+# Evaluating model performance
+postResample(pred4, y_val)
+md1_result <- postResample(pred4, y_val)
+
+result<- data.frame(result, md1 = round(md1_result,3))
+result
+```
+
+#Creating Prediction Variable
+```{r}
+
+```
+
