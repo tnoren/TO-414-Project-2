@@ -65,13 +65,13 @@ train_set <- sample(1:nrow(basketball), 0.7*nrow(basketball))
 
 #Training set 
 tr <- basketball[train_set, ]
-x_tr <- basketball[train_set, -25] #x only 
-y_tr <- basketball[train_set, 25] # y only
+x_tr <- basketball[train_set, -23] #x only 
+y_tr <- basketball[train_set, 23] # y only
 
 #Validation set
 val <- basketball[-train_set, ]
-x_val <- basketball[-train_set,-25]  
-y_val <- basketball[-train_set,25]  
+x_val <- basketball[-train_set, -23]  
+y_val <- basketball[-train_set, 23]  
 
 head(tr)
 
@@ -86,7 +86,7 @@ library(caret)
 
 # Simple linear regression
 
-m1 <- lm(POSTSEASON_NUM ~ ., data = tr)
+m1 <- lm(POSTSEASON_NUM ~ G + ADJOE + ADJDE + BARTHAG + TOR + DRB + FTR + WAB + Delta_2P + Delta_3P, data = tr)
 
 summary(m1)
 
@@ -105,8 +105,18 @@ predict(m1, x_val, interval ="prediction", level= 0.95)
 postResample(pred4, y_val)
 md1_result <- postResample(pred4, y_val)
 
-result<- data.frame(result, md1 = round(md1_result,3))
-result
+#Residual Plot
+#attach(tr)
+#require(gridExtra)
+#library(gridExtra)
+#plot1 <- ggplot(data = tr, aes(x_tr, resid(m1))) + geom_point() + geom_smooth()
+#nrow(residuals(m1))
+#nrow(x_tr)
+#plot1
+
+res <- resid(m1)
+plot(fitted(m1), res)
+abline(0, 0)
 ```
 
 #Creating Prediction Variable
