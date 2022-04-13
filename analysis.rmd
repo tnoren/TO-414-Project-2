@@ -2,19 +2,28 @@
 title: "Project 2 Deliverable 1"
 author: "Raghav Maini, Nick Caseria, Gabriel Correa, Katherine McElroy, Taylor Noren"
 date: "2/26/2022"
-output:
-  html_document:
-    toc: true
-    theme: readable
+output: 
+  html_document: 
     highlight: tango
-    code_folding: show
+    theme: united
+    toc: true
+    toc_depth: 2
+    toc_float: true
+    number_sections: true
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(rpart)
+library(rpart.plot)
+library (C50)
+library(gmodels)
+library(caret)
+library(ggplot2)
+library(lattice)
 ```
 
-## Downloading and Prepping the Data
+# Downloading and Prepping the Data
 
 ```{r}
 #Downloading and Prepping the Data
@@ -54,6 +63,10 @@ basketball$POSTSEASON <- NULL
 summary(basketball)
 
 
+success_eval <- data.frame(matrix(ncol=6, nrow=1718))
+colnames(success_eval) <- c("LR", "kNN", "ANN", "SVM", "RT", "Actual")
+
+
 ```
 
 ## Split Data into Training Set and Validation Set
@@ -78,7 +91,7 @@ head(tr)
 
 ```
 
-## Run Linear Regression
+# Linear Regression
 
 ```{r}
 if(!"caret" %in% installed.packages()){install.packages("caret")}
@@ -124,7 +137,7 @@ abline(0, 0)
 
 ```
 
-# Support Vector Machine (Vanilla Kernel)
+# Support Vector Machine
 ```{r}
 library(kernlab)
 library(caret)
@@ -138,16 +151,51 @@ rank_classifier_vanilla <- ksvm(POSTSEASON_NUM ~., data = tr,
 rank_predictions_vanilla <- predict(rank_classifier_vanilla, val)
 
 table(rank_predictions_vanilla, as.factor(y_val))
-rank_predictions_vanilla
+# rank_predictions_vanilla
 agreement_vanilla <- rank_predictions_vanilla == y_val
 # table(agreement_vanilla)
 prop.table(table(agreement_vanilla))
 # success_eval$SVM <- rank_predictions_vanilla
-confusionMatrix(as.factor(rank_predictions_vanilla), as.factor(y_val))
+# confusionMatrix(as.factor(rank_predictions_vanilla), as.factor(y_val))
 
+length(levels(rank))
 ```
 ## Vanilla SVM Stats
 
-Accuracy: `r round(confusionMatrix(rank_predictions_vanilla, y_val)$overall[["Accuracy"]] * 100, 2)`%
+Accuracy: r round(confusionMatrix(rank_predictions_vanilla, y_val)$overall[["Accuracy"]] * 100, 2)%
 
-Kappa: `r round(confusionMatrix(rank_predictions_vanilla, y_val)$overall[["Kappa"]] * 100, 2)`%
+Kappa: r round(confusionMatrix(rank_predictions_vanilla, y_val)$overall[["Kappa"]] * 100, 2)%
+
+# Creating the Regression Tree
+```{r}
+# STEP 1: Create decision tree using regression
+buckets <- rpart(POSTSEASON_NUM ~ G + W + ADJOE + ADJDE + BARTHAG + EFG_O + TOR + ORB + DRB + FTR + ADJ_T + WAB, method = "anova", data = basketball)
+
+# STEP 2: Plot and Print out results for decision tree using regression from above
+
+rpart.plot(buckets, uniform = TRUE,
+          main = "Predicting Postseason Breadth") 
+
+print(buckets)
+
+# STEP 3: Create test data (we will use ours from above already created)
+
+val <- basketball[-train_set, ]
+x_val <- basketball[-train_set, -23]  
+y_val <- basketball[-train_set, 23] 
+
+# STEP 4: Predict Post Season Breadth off of our train data set
+
+postseason_predictions <- predict(buckets, tr, method = "anova")
+
+# STEP 5: Visualizations!
+table(postseason_predictions,tr$POSTSEASON_NUM)
+
+# STEP 6: Correlation!
+cor(postseason_predictions,tr$POSTSEASON_NUM)
+
+# STEP 7: Assign the Regression Tree output to success_eval column
+
+
+success_eval$RT <- postseason_predictions
+```
