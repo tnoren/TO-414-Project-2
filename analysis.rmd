@@ -21,6 +21,7 @@ library(gmodels)
 library(caret)
 library(ggplot2)
 library(lattice)
+library(Metrics)
 ```
 
 # Downloading and Prepping the Data
@@ -73,7 +74,7 @@ colnames(success_eval) <- c("LR", "kNN", "ANN", "SVM", "RT", "Actual")
 
 ```{r}
 #70 - 30 Split
-set.seed(783)
+set.seed(656)
 train_set <- sample(1:nrow(basketball), 0.7*nrow(basketball))
 
 #Training set 
@@ -132,9 +133,37 @@ plot(fitted(m1), res)
 abline(0, 0)
 ```
 
+
+
 #Creating Prediction Variable
 ```{r}
 
+```
+
+
+# kNN
+
+```{r}
+library(class)
+library(caret)
+set.seed(656)
+trup <- upSample(x=tr[,-ncol(tr)],
+y=as.factor(tr$POSTSEASON_NUM))
+
+valup <- upSample(x=val[,-ncol(val)],
+y=as.factor(val$POSTSEASON_NUM))
+
+postseason_test_pred <- knn(train = trup, test = valup, cl = trup$Class, k=43)
+rmse(as.numeric(valup$Class), as.numeric(postseason_test_pred))
+```
+
+
+```{r}
+#tr , val
+set.seed(656)
+ctrl <- trainControl(method="repeatedcv", repeats=3)
+knnFit <- train(POSTSEASON_NUM ~ ., data = basketball, method = "knn", trControl=ctrl, preProcess = c("center", "scale"), tuneLength = 20)
+knnFit
 ```
 
 # Support Vector Machine
@@ -150,21 +179,21 @@ rank_classifier_vanilla <- ksvm(POSTSEASON_NUM ~., data = tr,
 
 rank_predictions_vanilla <- predict(rank_classifier_vanilla, val)
 
-table(rank_predictions_vanilla, as.factor(y_val))
+# table(rank_predictions_vanilla, as.factor(y_val))
 # rank_predictions_vanilla
 agreement_vanilla <- rank_predictions_vanilla == y_val
 # table(agreement_vanilla)
 prop.table(table(agreement_vanilla))
 # success_eval$SVM <- rank_predictions_vanilla
-# confusionMatrix(as.factor(rank_predictions_vanilla), as.factor(y_val))
 
-length(levels(rank))
+rmse(as.numeric(rank_predictions_vanilla), as.numeric(y_val))
+
+
 ```
 ## Vanilla SVM Stats
 
-Accuracy: r round(confusionMatrix(rank_predictions_vanilla, y_val)$overall[["Accuracy"]] * 100, 2)%
+RMSE: `r rmse(as.numeric(rank_predictions_vanilla), as.numeric(y_val))`
 
-Kappa: r round(confusionMatrix(rank_predictions_vanilla, y_val)$overall[["Kappa"]] * 100, 2)%
 
 # Creating the Regression Tree
 ```{r}
