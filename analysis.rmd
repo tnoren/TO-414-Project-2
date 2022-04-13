@@ -124,3 +124,30 @@ abline(0, 0)
 
 ```
 
+# Support Vector Machine (Vanilla Kernel)
+```{r}
+library(kernlab)
+library(caret)
+
+rank_classifier_vanilla <- ksvm(POSTSEASON_NUM ~., data = tr,
+                         kernel = "vanilladot", C = 1)
+
+## look at basic information about the model
+# rank_classifier_vanilla
+
+rank_predictions_vanilla <- predict(rank_classifier_vanilla, val)
+
+table(rank_predictions_vanilla, as.factor(y_val))
+rank_predictions_vanilla
+agreement_vanilla <- rank_predictions_vanilla == y_val
+# table(agreement_vanilla)
+prop.table(table(agreement_vanilla))
+# success_eval$SVM <- rank_predictions_vanilla
+confusionMatrix(as.factor(rank_predictions_vanilla), as.factor(y_val))
+
+```
+## Vanilla SVM Stats
+
+Accuracy: `r round(confusionMatrix(rank_predictions_vanilla, y_val)$overall[["Accuracy"]] * 100, 2)`%
+
+Kappa: `r round(confusionMatrix(rank_predictions_vanilla, y_val)$overall[["Kappa"]] * 100, 2)`%
