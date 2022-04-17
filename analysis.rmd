@@ -1,7 +1,7 @@
 ---
 title: "Project 2 Deliverable 1"
 author: "Raghav Maini, Nick Caseria, Gabriel Correa, Katherine McElroy, Taylor Noren"
-date: "2/26/2022"
+date: "04/17/2022"
 output: 
   html_document: 
     highlight: tango
@@ -64,8 +64,8 @@ basketball$POSTSEASON <- NULL
 summary(basketball)
 
 
-success_eval <- data.frame(matrix(ncol=6, nrow=1718))
-colnames(success_eval) <- c("LR", "kNN", "ANN", "SVM", "RT", "Actual")
+success_eval <- data.frame(matrix(ncol=5, nrow=737))
+colnames(success_eval) <- c("LR", "kNN", "SVM", "RT", "Actual")
 
 
 ```
@@ -88,7 +88,7 @@ x_val <- basketball[-train_set, -23]
 y_val <- basketball[-train_set, 23]  
 
 head(tr)
-
+success_eval$Actual <- y_val
 
 ```
 
@@ -153,8 +153,12 @@ y=as.factor(tr$POSTSEASON_NUM))
 valup <- upSample(x=val[,-ncol(val)],
 y=as.factor(val$POSTSEASON_NUM))
 
-postseason_test_pred <- knn(train = trup, test = valup, cl = trup$Class, k=43)
+postseason_test_pred <- knn(train = trup, test = val,
+                            cl = trup$Class,
+                            k=43)
 rmse(as.numeric(valup$Class), as.numeric(postseason_test_pred))
+
+success_eval$kNN <- postseason_test_pred
 ```
 
 
@@ -162,8 +166,14 @@ rmse(as.numeric(valup$Class), as.numeric(postseason_test_pred))
 #tr , val
 set.seed(656)
 ctrl <- trainControl(method="repeatedcv", repeats=3)
-knnFit <- train(POSTSEASON_NUM ~ ., data = basketball, method = "knn", trControl=ctrl, preProcess = c("center", "scale"), tuneLength = 20)
-knnFit
+knnFit <- train(POSTSEASON_NUM ~ ., data = basketball,
+                method = "knn",
+                trControl=ctrl,
+                preProcess = c("center", "scale"),
+                tuneLength = 20)
+knn_pred <- predict(knnFit, newdata = tr)
+# success_eval$kNN <- ifelse(knn_pred == "no", 0, 1)
+
 ```
 
 # Support Vector Machine
@@ -171,24 +181,28 @@ knnFit
 library(kernlab)
 library(caret)
 
+tr$POSTSEASON_NUM <- as.factor(tr$POSTSEASON_NUM)
+# y_val <- as.factor(y_val)
+
 rank_classifier_vanilla <- ksvm(POSTSEASON_NUM ~., data = tr,
                          kernel = "vanilladot", C = 1)
 
 ## look at basic information about the model
 # rank_classifier_vanilla
 
-rank_predictions_vanilla <- predict(rank_classifier_vanilla, val)
+rank_predictions_vanilla <- predict(rank_classifier_vanilla, newdata = val)
 
-# table(rank_predictions_vanilla, as.factor(y_val))
-# rank_predictions_vanilla
 agreement_vanilla <- rank_predictions_vanilla == y_val
 # table(agreement_vanilla)
 prop.table(table(agreement_vanilla))
-# success_eval$SVM <- rank_predictions_vanilla
+success_eval$SVM <- rank_predictions_vanilla
 
 rmse(as.numeric(rank_predictions_vanilla), as.numeric(y_val))
 
 
+tr$POSTSEASON_NUM <- as.numeric(tr$POSTSEASON_NUM)
+y_val <- as.numeric(y_val)
+success_eval
 ```
 ## Vanilla SVM Stats
 
@@ -215,16 +229,34 @@ y_val <- basketball[-train_set, 23]
 
 # STEP 4: Predict Post Season Breadth off of our train data set
 
+# changed tr to val. TN
 postseason_predictions <- predict(buckets, tr, method = "anova")
+# postseason_predictions <- predict(buckets, val, method = "anova")
 
 # STEP 5: Visualizations!
+# changed tr to val. TN
 table(postseason_predictions,tr$POSTSEASON_NUM)
+# table(postseason_predictions,val$POSTSEASON_NUM)
 
 # STEP 6: Correlation!
+# changed tr to val. TN
 cor(postseason_predictions,tr$POSTSEASON_NUM)
+# cor(postseason_predictions,val$POSTSEASON_NUM)
+
 
 # STEP 7: Assign the Regression Tree output to success_eval column
 
 
-success_eval$RT <- postseason_predictions
+# success_eval$RT <- postseason_predictions
+success_eval
 ```
+
+
+# Stacking the Models
+
+```{r}
+
+
+
+```
+
