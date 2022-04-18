@@ -29,6 +29,7 @@ library(kernlab)
 library(lattice)
 library(Metrics)
 library(rpart.plot)
+library(randomForest)
 
 set.seed(656)
 ```
@@ -74,7 +75,7 @@ summary(basketball)
 
 
 success_eval <- data.frame(matrix(ncol=5, nrow=737))
-colnames(success_eval) <- c("LR", "kNN", "SVM", "RT", "Actual")
+colnames(success_eval) <- c("LR", "kNN", "SVM", "RF", "Actual")
 
 
 ```
@@ -163,7 +164,7 @@ postseason_test_pred <- knn(train = trup, test = val,
                             k=43)
 rmse(as.numeric(valup$Class), as.numeric(postseason_test_pred))
 
-success_eval$kNN <- postseason_test_pred
+success_eval$kNN <- as.numeric(postseason_test_pred)
 ```
 
 
@@ -199,7 +200,7 @@ rank_predictions_vanilla <- predict(rank_classifier_vanilla, newdata = val)
 agreement_vanilla <- rank_predictions_vanilla == y_val
 # table(agreement_vanilla)
 prop.table(table(agreement_vanilla))
-success_eval$SVM <- rank_predictions_vanilla
+success_eval$SVM <- as.numeric(rank_predictions_vanilla)
 
 rmse(as.numeric(rank_predictions_vanilla), as.numeric(y_val))
 
@@ -211,6 +212,19 @@ y_val <- as.numeric(y_val)
 ## Vanilla SVM Stats
 
 RMSE: `r rmse(as.numeric(rank_predictions_vanilla), as.numeric(y_val))`
+
+# Random Forest
+
+```{r}
+
+rfmodel <- randomForest(as.factor(POSTSEASON_NUM) ~ ., data = tr)
+rfpredict <- predict(rfmodel, val)
+rfpredict <- as.numeric(rfpredict)
+# rfpredict
+success_eval$RF = rfpredict - 1
+
+```
+
 
 
 # Creating the Regression Tree
@@ -232,20 +246,13 @@ x_val <- basketball[-train_set, -23]
 y_val <- basketball[-train_set, 23] 
 
 # STEP 4: Predict Post Season Breadth off of our train data set
-
-# changed tr to val. TN
 postseason_predictions <- predict(buckets, tr, method = "anova")
-# postseason_predictions <- predict(buckets, val, method = "anova")
 
 # STEP 5: Visualizations!
-# changed tr to val. TN
 table(postseason_predictions,tr$POSTSEASON_NUM)
-# table(postseason_predictions,val$POSTSEASON_NUM)
 
 # STEP 6: Correlation!
-# changed tr to val. TN
 cor(postseason_predictions,tr$POSTSEASON_NUM)
-# cor(postseason_predictions,val$POSTSEASON_NUM)
 
 
 # STEP 7: Assign the Regression Tree output to success_eval column
@@ -277,12 +284,20 @@ In summary, this shows that a teams post season breadth is predicted to be lowes
 # Stacking the Models
 
 ```{r}
+
 success_eval$Outcome <- ifelse(success_eval$kNN == success_eval$Actual, 1, 
                                ifelse(success_eval$SVM == success_eval$Actual, 1, 
-                                      0))
+                                      ifelse(success_eval$RF == success_eval$Actual, 1,
+                                             0)))
+
+# convert to factor for decision tree
+success_eval$kNN <- as.factor(success_eval$kNN)
+success_eval$SVM <- as.factor(success_eval$SVM)
+success_eval$RF <- as.factor(success_eval$RF)
+success_eval$Actual <- as.factor(success_eval$Actual)
 success_eval$LR <- NULL
-success_eval$RT <- NULL
-# success_eval$Actual <- as.factor(success_eval$Actual)
+# success_eval$RT <- NULL
+
 success_eval$Actual <- NULL
 success_eval$Outcome <- as.factor(success_eval$Outcome)
 
@@ -291,7 +306,7 @@ floor(nrow(success_eval) * 0.7)
 success_train <- success_eval[1:515,]
 success_test  <- success_eval[516:730,]
 
-stack_model  <- C5.0(success_train[,-3], success_train[,3])
+stack_model  <- C5.0(success_train[,-4], success_train[,4])
 stack_pred   <- predict(stack_model, success_test)
 plot(stack_model)
 
