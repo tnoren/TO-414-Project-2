@@ -1,7 +1,12 @@
 ---
-title: "Project 2 Deliverable 1"
-author: "Raghav Maini, Nick Caseria, Gabriel Correa, Katherine McElroy, Taylor Noren"
-date: "04/17/2022"
+title: "March Madness Tournament Round Predictions"
+subtitle: "NCAA Men's Division I Basketball"
+author: " - Raghav Maini\n
+          - Nick Caseria\n
+          - Gabriel Correa\n
+          - Katherine McElroy\n
+          - Taylor Noren\n"
+date: "April 17, 2022"
 output: 
   html_document: 
     highlight: tango
@@ -9,19 +14,23 @@ output:
     toc: true
     toc_depth: 2
     toc_float: true
-    number_sections: true
+    number_sections: false
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-library(rpart)
-library(rpart.plot)
 library (C50)
-library(gmodels)
 library(caret)
+library(class)
+library(rpart)
+library(gmodels)
 library(ggplot2)
+library(kernlab)
 library(lattice)
 library(Metrics)
+library(rpart.plot)
+
+set.seed(656)
 ```
 
 # Downloading and Prepping the Data
@@ -74,7 +83,6 @@ colnames(success_eval) <- c("LR", "kNN", "SVM", "RT", "Actual")
 
 ```{r}
 #70 - 30 Split
-set.seed(656)
 train_set <- sample(1:nrow(basketball), 0.7*nrow(basketball))
 
 #Training set 
@@ -96,7 +104,6 @@ success_eval$Actual <- y_val
 
 ```{r}
 if(!"caret" %in% installed.packages()){install.packages("caret")}
-library(caret)
 
 # Simple linear regression
 
@@ -109,7 +116,7 @@ summary(m1)
 pred4 <- predict(m1, x_val)
 
 #Creating predict interval 
-predict(m1, x_val, interval ="prediction", level= 0.95)
+pred5 <- predict(m1, x_val, interval ="prediction", level= 0.95)
 
 
 #  Step 3. Evaluating the model performance   
@@ -135,7 +142,7 @@ abline(0, 0)
 
 
 
-#Creating Prediction Variable
+# Creating Prediction Variable
 ```{r}
 
 ```
@@ -144,11 +151,9 @@ abline(0, 0)
 # kNN
 
 ```{r}
-library(class)
-library(caret)
-set.seed(656)
-trup <- upSample(x=tr[,-ncol(tr)],
-y=as.factor(tr$POSTSEASON_NUM))
+
+# trup <- upSample(x=tr[,-ncol(tr)],
+#                  y=as.factor(tr$POSTSEASON_NUM))
 
 valup <- upSample(x=val[,-ncol(val)],
 y=as.factor(val$POSTSEASON_NUM))
@@ -164,22 +169,23 @@ success_eval$kNN <- postseason_test_pred
 
 ```{r}
 #tr , val
-set.seed(656)
+
+trup <- upSample(x = )
+
 ctrl <- trainControl(method="repeatedcv", repeats=3)
-knnFit <- train(POSTSEASON_NUM ~ ., data = basketball,
+knnFit <- train(POSTSEASON_NUM ~ ., data = trup,
                 method = "knn",
                 trControl=ctrl,
                 preProcess = c("center", "scale"),
                 tuneLength = 20)
-knn_pred <- predict(knnFit, newdata = tr)
+knn_pred <- predict(knnFit, newdata = val)
 # success_eval$kNN <- ifelse(knn_pred == "no", 0, 1)
 
 ```
 
 # Support Vector Machine
 ```{r}
-library(kernlab)
-library(caret)
+
 
 tr$POSTSEASON_NUM <- as.factor(tr$POSTSEASON_NUM)
 # y_val <- as.factor(y_val)
@@ -202,7 +208,7 @@ rmse(as.numeric(rank_predictions_vanilla), as.numeric(y_val))
 
 tr$POSTSEASON_NUM <- as.numeric(tr$POSTSEASON_NUM)
 y_val <- as.numeric(y_val)
-success_eval
+# success_eval
 ```
 ## Vanilla SVM Stats
 
@@ -248,15 +254,57 @@ cor(postseason_predictions,tr$POSTSEASON_NUM)
 
 
 # success_eval$RT <- postseason_predictions
-success_eval
+# success_eval
 ```
+## Understanding Regression Tree Output and Diagram
 
+Reviewing our output, we re-coded our values to show that not making the tournament = 0, making it as far as the round of 64 = 1, making it as far as the round of 32 = 3, making it as far as the sweet 16 = 4, making it as far as the elite 8 = 5, making it as far as the final 4 = 6, and making the championship game = 7.  Given this output review, our regression tree shows results predicted from "WAB" which is Wins Above Bubble, "W" which is Wins, and "G" which is Games. 
+
+- If a team's WAB is LESS than 1.6 games, LESS than 0.15 games, and their number of W is LESS than 23, their output in our 0-7 postseason breadth result is 0.5 according to the model.  79% of the data distribution falls in this branch.
+
+- If a team's WAB is LESS than 1.6 games, LESS than 0.15 games, and their number of W is MORE than 23, their output in our 0-7 postseason breadth result is 0.5 according to the model.  7% of the data distribution falls in this branch.
+
+- If a team's WAB is LESS than 1.6 games, but MORE than 0.15 games, their output in our 0-7 postseason breadth result is 1.1 according to the model.  4% of the data distribution falls in this branch.
+
+- If a team's WAB is MORE than 1.6 games, LESS than 37 games played, and LESS than 35 games played, their output in our 0-7 postseason breadth result is 1.4 according to the model.  4% of the data distribution falls in this branch.
+
+- If a team's WAB is MORE than 1.6 games, LESS than 37 games, but MORE than 35 games played, their output in our 0-7 postseason breadth result is 2.2 according to the model.  4% of the data distribution falls in this branch.
+
+- If a team's WAB is MORE than 1.6 games, MORE than 37 games, but LESS than 39 games played, their output in our 0-7 postseason breadth result is 3.7 according to the model.  2% of the data distribution falls in this branch.
+
+- If a team's WAB is MORE than 1.6 games, MORE than 37 games, and MORE than 39 games played, their output in our 0-7 postseason breadth result is 5.9 according to the model.  1% of the data distribution falls in this branch.
+
+In summary, this shows that a teams post season breadth is predicted to be lowest and closest to zero if they have fewer than 0.15 Wins Above the Bubble and fewer than 23 wins.  If these two things exist in a college team's season, it is unlikely they see the postseason. Alternatively, If a team's Wins Above Bubble is greater than 1.6, and their games played is over 39, that 1% is predicted to see the 5.9th round of the tournament.  That equals them making it to the Elite 8, almost to the Final 4.
 
 # Stacking the Models
 
 ```{r}
+success_eval$Outcome <- ifelse(success_eval$kNN == success_eval$Actual, 1, 
+                               ifelse(success_eval$SVM == success_eval$Actual, 1, 
+                                      0))
+success_eval$LR <- NULL
+success_eval$RT <- NULL
+# success_eval$Actual <- as.factor(success_eval$Actual)
+success_eval$Actual <- NULL
+success_eval$Outcome <- as.factor(success_eval$Outcome)
 
+floor(nrow(success_eval) * 0.7)
 
+success_train <- success_eval[1:515,]
+success_test  <- success_eval[516:730,]
+
+stack_model  <- C5.0(success_train[,-3], success_train[,3])
+stack_pred   <- predict(stack_model, success_test)
+plot(stack_model)
+
+confusionMatrix(success_eval)
 
 ```
+
+# Conclusion
+
+Enhanced oddsmaking and risk management
+
+Bonus calculation for team coaches
+
 
