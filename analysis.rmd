@@ -152,8 +152,8 @@ abline(0, 0)
 
 ```{r}
 
-# trup <- upSample(x=tr[,-ncol(tr)],
-#                  y=as.factor(tr$POSTSEASON_NUM))
+trup <- upSample(x=tr[,-ncol(tr)],
+                 y=as.factor(tr$POSTSEASON_NUM))
 
 valup <- upSample(x=val[,-ncol(val)],
 y=as.factor(val$POSTSEASON_NUM))
@@ -170,10 +170,8 @@ success_eval$kNN <- postseason_test_pred
 ```{r}
 #tr , val
 
-trup <- upSample(x = )
-
 ctrl <- trainControl(method="repeatedcv", repeats=3)
-knnFit <- train(POSTSEASON_NUM ~ ., data = trup,
+knnFit <- train(POSTSEASON_NUM ~ ., data = basketball,
                 method = "knn",
                 trControl=ctrl,
                 preProcess = c("center", "scale"),
@@ -296,8 +294,6 @@ success_test  <- success_eval[516:730,]
 stack_model  <- C5.0(success_train[,-3], success_train[,3])
 stack_pred   <- predict(stack_model, success_test)
 plot(stack_model)
-
-confusionMatrix(success_eval)
 
 ```
 
