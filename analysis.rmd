@@ -301,7 +301,7 @@ success_eval$LR <- NULL
 success_eval$Actual <- NULL
 success_eval$Outcome <- as.factor(success_eval$Outcome)
 
-floor(nrow(success_eval) * 0.7)
+# floor(nrow(success_eval) * 0.7)
 
 success_train <- success_eval[1:515,]
 success_test  <- success_eval[516:730,]
@@ -314,8 +314,14 @@ plot(stack_model)
 
 # Conclusion
 
-Enhanced oddsmaking and risk management
+Models such as these offer many advantages over traditional intuition based decision making. While some traditional metrics may seem like common sense, it is the unlikely characteristics which will provide the most advantage. 
 
-Bonus calculation for team coaches
+<b> Enhanced odds making and risk management </b> 
+
+For firms in the sports betting industry, successfully predicting tournament outcomes can help to facilitate betting action on either side of the bet for each game. Offering odds which are determined through statistical analysis can also attract customers looking to try to "beat the house" with their own algorithm based strategies.
+
+<b> Bonus calculation for team coaches </b>
+
+Academic institutions must commit a large amount of capital to their athletic programs, and coaching salaries represent a substantial portion of these budgets. With bonus structures tied to tournament performance at many schools, financial planning can be augmented with insights gained from models similar to those created here.
 
 
