@@ -223,6 +223,7 @@ rfpredict <- as.numeric(rfpredict)
 # rfpredict
 success_eval$RF = rfpredict - 1
 
+varImpPlot(rfmodel)
 ```
 
 
@@ -311,6 +312,48 @@ stack_pred   <- predict(stack_model, success_test)
 plot(stack_model)
 
 ```
+
+```{r}
+
+new_season <- read.csv("cbb21.csv", stringsAsFactors = TRUE)
+# create df with 
+teams <- new_season$TEAM
+new_season$TEAM <- NULL
+new_season$CONF <- NULL
+new_season$SEED <- NULL
+summary(new_season)
+
+new_season$Delta_2P <- new_season$X2P_O - new_season$X2P_D
+new_season$Delta_3P <- new_season$X3P_O - new_season$X3P_D
+
+new_season$POSTSEASON_NUM <- ifelse(new_season$POSTSEASON == "R64", 1,
+                                    ifelse(new_season$POSTSEASON == "R32", 2,
+                                           ifelse(new_season$POSTSEASON == "S16", 3,
+                                                  ifelse(new_season$POSTSEASON == "E8", 4,
+                                                         ifelse(new_season$POSTSEASON == "F4", 5,
+                                                                ifelse(new_season$POSTSEASON == "2ND", 6,
+                                                                       ifelse(new_season$POSTSEASON == "Champions", 7,
+                                                                              0)))))))
+
+ifelse(new_season$POSTSEASON == "R64", 1,
+                                    ifelse(new_season$POSTSEASON == "R32", 2,
+                                           ifelse(new_season$POSTSEASON == "S16", 3,
+                                                  ifelse(new_season$POSTSEASON == "E8", 4,
+                                                         ifelse(new_season$POSTSEASON == "F4", 5,
+                                                                ifelse(new_season$POSTSEASON == "2ND", 6,
+                                                                       ifelse(new_season$POSTSEASON == "Champions", 7,
+                                                                              0)))))))
+
+new_season$POSTSEASON_NUM[is.na(new_season$POSTSEASON_NUM)] <- 0
+new_season$POSTSEASON <- NULL
+
+summary(new_season)
+
+str(new_season)
+  
+  
+```
+
 
 # Conclusion
 
