@@ -178,7 +178,6 @@ knnFit <- train(POSTSEASON_NUM ~ ., data = basketball,
                 preProcess = c("center", "scale"),
                 tuneLength = 20)
 knn_pred <- predict(knnFit, newdata = val)
-# success_eval$kNN <- ifelse(knn_pred == "no", 0, 1)
 
 ```
 
@@ -222,6 +221,8 @@ rfpredict <- predict(rfmodel, val)
 rfpredict <- as.numeric(rfpredict)
 # rfpredict
 success_eval$RF = rfpredict - 1
+
+rmse(success_eval$RF, as.numeric(y_val))
 
 varImpPlot(rfmodel)
 ```
@@ -313,19 +314,20 @@ plot(stack_model)
 
 ```
 
+# Validating Models against the 2021 Tournament Outcomes
+
 ```{r}
 
 new_season <- read.csv("cbb21.csv", stringsAsFactors = TRUE)
-# create df with 
-teams <- new_season$TEAM
+# create df with 2021 season data 
+teams_21 <- data.frame(matrix(ncol=1, nrow=347))
+colnames(teams_21) <- c("Teams")
+teams_21$Teams <- new_season$TEAM
 new_season$TEAM <- NULL
 new_season$CONF <- NULL
 new_season$SEED <- NULL
-summary(new_season)
-
 new_season$Delta_2P <- new_season$X2P_O - new_season$X2P_D
 new_season$Delta_3P <- new_season$X3P_O - new_season$X3P_D
-
 new_season$POSTSEASON_NUM <- ifelse(new_season$POSTSEASON == "R64", 1,
                                     ifelse(new_season$POSTSEASON == "R32", 2,
                                            ifelse(new_season$POSTSEASON == "S16", 3,
@@ -335,29 +337,27 @@ new_season$POSTSEASON_NUM <- ifelse(new_season$POSTSEASON == "R64", 1,
                                                                        ifelse(new_season$POSTSEASON == "Champions", 7,
                                                                               0)))))))
 
-ifelse(new_season$POSTSEASON == "R64", 1,
-                                    ifelse(new_season$POSTSEASON == "R32", 2,
-                                           ifelse(new_season$POSTSEASON == "S16", 3,
-                                                  ifelse(new_season$POSTSEASON == "E8", 4,
-                                                         ifelse(new_season$POSTSEASON == "F4", 5,
-                                                                ifelse(new_season$POSTSEASON == "2ND", 6,
-                                                                       ifelse(new_season$POSTSEASON == "Champions", 7,
-                                                                              0)))))))
-
 new_season$POSTSEASON_NUM[is.na(new_season$POSTSEASON_NUM)] <- 0
+teams_21$Actual <- new_season$POSTSEASON_NUM
 new_season$POSTSEASON <- NULL
 
 summary(new_season)
-
 str(new_season)
   
-  
+
+rfpredict21 <- predict(rfmodel, new_season)
+rfpredict21 <- as.numeric(rfpredict21)
+teams_21$Prediction = rfpredict21 - 1
+
+rmse(teams_21$Actual, teams_21$Prediction)
+
+str(rfpredict21)
 ```
 
 
 # Conclusion
 
-Models such as these offer many advantages over traditional intuition based decision making. While some traditional metrics may seem like common sense, it is the unlikely characteristics which will provide the most advantage. 
+While our final prediction did not yield actionable results, models such as these offer many advantages over traditional intuition based decision making. While some traditional metrics may seem like common sense, it is the unlikely characteristics which will provide the most advantage. 
 
 <b> Enhanced odds making and risk management </b> 
 
